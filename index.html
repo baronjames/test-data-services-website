@@ -519,26 +519,36 @@
       </div>
     </section>
 
+    <!-- Contact form section -->
     <section id="contact-us" class="slice slice-lg" data-delimiter-before="1">
       <div class="container">
         <div class="row row-grid align-items-center">
           <div class="col-lg-6">
             <h3>Contact us</h3>
             <p class="lead">If there's something we can help you with, jut let us know. We'll be more than happy to offer you our help</p>
-            <form class="mt-5" method="POST" action="https://api.testdataservices.com.au/ContactMessage">
+            <form class="mt-5" id="contact-form">
+              <div class="js-error-message alert alert-danger fade" role="alert" style="display: none;">
+                  <strong>Ops!</strong> Looks like something went wrong, please try again later.<button type="button">
+                  
+                </button>
+              </div>
+              <div class="js-success-message alert alert-success fade" role="alert" style="display: none;">
+                  <strong>Thanks!</strong> Your message has been sent, we will be in touch shortly!<button type="button">
+                </button>
+              </div>
               <div class="form-group">
                 <label class="sr-only">Your name</label>
-                <input class="form-control form-control-lg" placeholder="Your name" type="text" name="name">
+                <input class="form-control form-control-lg" placeholder="Your name" type="text" name="name" required>
               </div>
               <div class="form-group">
                 <label class="sr-only">Email address</label>
-                <input class="form-control form-control-lg" placeholder="Email address" type="email" name="email">
+                <input class="form-control form-control-lg" placeholder="Email address" type="email" name="email" required>
               </div>
               <div class="form-group">
                 <label class="sr-only">Type your message</label>
-                <textarea class="form-control form-control-lg textarea-autosize" rows="5" placeholder="Type your message" name="message"></textarea>
+                <textarea class="form-control form-control-lg textarea-autosize" rows="5" placeholder="Type your message" name="message" required></textarea>
               </div>
-              <button type="submit" class="btn btn-dark rounded-pill mt-4">Send message</button>
+              <button type="submit" class="btn btn-dark rounded-pill mt-4 js-submit-form-button">Send message</button>
             </form>
           </div>
           <div class="col-lg-5 ml-lg-auto">
@@ -633,6 +643,60 @@
   <script src="assets/js/purpose.core.js"></script>
   <!-- Purpose JS -->
   <script src="assets/js/purpose.min.js"></script>
+  <script type="text/javascript">
+    //Document.ready means "wait for everything else to finish loading, then run this code" 
+    $(document).ready(function() {
+      //Select the <form> with the id "contact-form"
+      var contact_form = $("#contact-form");
+      //Select any html elements that have the class "js-submit-form-button"
+      var contact_form_submit_button = contact_form.find(".js-submit-form-button");
+      
+      // Select the alert messages
+      var success_message = contact_form.find(".js-success-message");
+      var failure_message = contact_form.find(".js-error-message");
+
+      //Attach a function that is triggered when the above js-submit-form-button element(s) are clicked (includes mobile touch events)
+      contact_form_submit_button.on("click", function(e) {
+
+        //Prevent whatever the default action might have been for that element (e is the event object)
+        e.preventDefault(); 
+
+        //check if the form is valid, if it isn't -> submit the form to trigger browser validation
+        //NOTE - The server consuming the posted data is always responsible for validating what the client sends it, client side validation can always be turned off by the client.
+        if(!contact_form[0].checkValidity()) {
+          //This is a bit of a hack required to trigger browser based validation.
+          //It creates a hidden submit button then clicks it then removes it
+          //The click interaction is what triggers the browser validation.
+          $('<input type="submit">').hide().appendTo(contact_form).click().remove();
+        } else {
+          //Serialize the form into an array of objects:
+          // e.g. [{"name":"name","value":"James Duncan"},{"name":"email","value":"hello@jamespaulduncan.com"},{"name":"message","value":"Hello, this is dog!"}]
+          //If more structured JSON is required we can create it manually (it's only 3 fields)
+          var form_data = JSON.stringify(contact_form.serializeArray());
+
+          $.ajax({
+            type: "POST",
+            url: "https://api.testdataservices.com.au/ContactMessage",
+            data: form_data
+          }).done(function(data) {
+            //hide all alerts
+            contact_form.find(".alert").removeClass("show").hide();
+            //Show success message
+            success_message.show().addClass("show");
+            //clear form (so data is not submitted twice)
+            contact_form[0].reset();
+
+          }).fail(function(data) {
+            //hide all alerts
+            contact_form.find(".alert").removeClass("show").hide();
+            //Show error message
+            failure_message.show().addClass("show");
+          });
+        }
+      });
+
+    });
+  </script>
 </body>
 
 </html>
